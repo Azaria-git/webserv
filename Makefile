@@ -1,7 +1,12 @@
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC = webserv.cpp Socket.cpp Epoll.cpp
+SRC = webserv.cpp\
+	Socket.cpp\
+	ClientSocket.cpp\
+	ServerSocket.cpp\
+	Epoll.cpp
+
 OBJ = $(SRC:.cpp=.o)
 NAME = webserv
 

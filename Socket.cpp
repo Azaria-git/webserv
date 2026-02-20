@@ -18,7 +18,7 @@
 Socket::Socket()
 	: _socketFd(-1)
 {
-	this->_AddrLen = sizeof(this->_addr);
+	this->_addrLen = sizeof(this->_addr);
 }
 
 Socket::Socket(const Socket& socketType)
@@ -31,6 +31,8 @@ Socket& Socket::operator=(const Socket& socketType)
 	if (this != &socketType)
 	{
 		_socketFd = socketType._socketFd;
+		_addr = socketType._addr;
+		_addrLen = socketType._addrLen;
 	}
 	return (*this);
 }
@@ -42,7 +44,7 @@ Socket::~Socket()
 }
 
 /* ************************************************************************** */
-/*                                Getters                                     */
+/*                      			Getters                                   */
 /* ************************************************************************** */
 
 int Socket::getSocketFd( void ) const
@@ -50,22 +52,19 @@ int Socket::getSocketFd( void ) const
 	return (_socketFd);
 }
 
+sockaddrIn	Socket::getAddr( void ) const
+{
+	return (_addr);
+}
+
+socklen_t	Socket::AddrLen( void ) const
+{
+	return (_addrLen);
+}
+
 /* ************************************************************************** */
 /*                             Other Methods                                  */
 /* ************************************************************************** */
-
-bool Socket::socket(int domain, int type, int protocol)
-{
-    _addr.sin_family = domain;
-    _socketFd = ::socket(domain, type, protocol);
-
-    if (_socketFd < 0)
-	{
-		std::cerr << "Error: Cannot create socket" << std::endl;
-        return (false);
-	}
-	return (true);
-}
 
 bool Socket::setsockopt(int level, int optname, unsigned int optlen)
 {
@@ -74,28 +73,6 @@ bool Socket::setsockopt(int level, int optname, unsigned int optlen)
     if (::setsockopt(_socketFd, level, optname, &opt, sizeof(opt)) < 0)
 	{
         std::cerr << "Error: setsockopt failed" << std::endl;
-        return (false);
-    }
-	return (true);
-}
-
-bool	Socket::bind(const std::string& host, uint16_t port)
-{
-	_addr.sin_port = htons(port);
-
-	uint32_t addrTmp;
-	if (host.empty())
-	    _addr.sin_addr.s_addr = addrTmp = INADDR_ANY;
-	else
-	{
-		if (inetPToN(_addr.sin_family, host, addrTmp))
-			return (false);
-	    _addr.sin_addr.s_addr = addrTmp;
-	}
-
-    if (::bind(_socketFd, reinterpret_cast<struct sockaddr*>(&_addr), sizeof(_addr)) < 0)
-	{
-        std::cerr << "Error: bind failed" << std::endl;
         return (false);
     }
 	return (true);
@@ -127,28 +104,6 @@ bool Socket::inetPToN(int domain, const std::string& ipString, uint32_t& ipNum) 
 	ipNum = 0;
     ipNum = (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3];
 	ipNum = htonl(ipNum);
-	return (true);
-}
-
-bool Socket::listen(int backlog)
-{
-    if (::listen(_socketFd, backlog) < 0)
-	{
-        std::cerr << "Error: listen failed" << std::endl;
-        return (false);
-    }
-	return (true);
-}
-
-bool 	Socket::accept(Socket& clientSocket)
-{
-    clientSocket._socketFd = ::accept(_socketFd
-		, reinterpret_cast<struct sockaddr*>(&clientSocket._addr)
-		, &(this->_AddrLen));
-    if (clientSocket._socketFd < 0) {
-        std::cerr << "Error: accept failed" << std::endl;
-        return (false);
-    }
 	return (true);
 }
 
@@ -195,3 +150,20 @@ bool stringToInt(const std::string& str, int& outValue)
         return (false);
     return (true);
 }
+
+void	Socket::initSocketFd(int fd)
+{
+	if (_socketFd < 0)
+		_socketFd = fd;
+}
+
+void	Socket::initAddr(sockaddrIn& addr)
+{
+	_addr = addr;
+}
+
+void	Socket::initAddrLen(socklen_t addrLen)
+{
+	_addrLen = addrLen;
+}
+

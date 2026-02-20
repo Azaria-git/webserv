@@ -5,14 +5,16 @@
 */
 
 # include <iostream>
-# include "Socket.hpp"
 # include <unistd.h>
-# include "Epoll.hpp"
 # include <sys/epoll.h>
+# include "Socket.hpp"
+# include "ServerSocket.hpp"
+# include "ClientSocket.hpp"
+# include "Epoll.hpp"
 
 int main()
 {
-	Socket serverSocket;
+	ServerSocket serverSocket;
 
 	if (!serverSocket.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 		return (1);

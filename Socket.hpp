@@ -16,29 +16,31 @@ class Socket
 {
 	public :
 		Socket();
-		~Socket();
-
-		bool	socket(int domain, int type, int protocol=0);
+		virtual ~Socket();
 
 		int		getSocketFd( void ) const;
-	    bool	setsockopt(int level, int optname, unsigned int optlen);
+		sockaddrIn	getAddr( void ) const;
+		socklen_t	AddrLen( void ) const;
 
-		bool	bind(const std::string& host, uint16_t port);
+		void	initSocketFd( int fd);
+		void	initAddr( sockaddrIn& addr );
+		void	initAddrLen( socklen_t addrLen );
+
+	    bool	setsockopt(int level, int optname, unsigned int optlen);
 		bool	inetPToN(int domain, const std::string& ipString
 		, uint32_t& ipNum) const;
-		bool	listen(int backlog=SOMAXCONN);
-		bool 	accept(Socket& clientSocket);
 		bool	setBlocking(bool set);
 
-	private :
+	protected :
 		Socket(const Socket& socketType);
 		Socket& operator=(const Socket& socketType);
 
 		int			_socketFd;
 	    sockaddrIn 	_addr;
-		socklen_t 	_AddrLen;
+		socklen_t 	_addrLen;
 };
 
 bool stringToInt(const std::string& str, int& outValue);
 
 #endif /* SOCKET_HPP */
+
