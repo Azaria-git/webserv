@@ -17,10 +17,10 @@ class ServerSocket : public Socket
 		ServerSocket();
 		~ServerSocket();
 
-		bool	socket(int domain, int type, int protocol=0);
-		bool	bind(const std::string& host, uint16_t port);
-		bool	listen(int backlog=SOMAXCONN);
-		bool 	accept(Socket& clientSocket);
+		bool		socket(int domain, int type, int protocol=0);
+		bool		bind(const std::string& host, uint16_t port);
+		bool		listen(int backlog=SOMAXCONN);
+		SocketInfo	accept( void );
 
 	private :
 		ServerSocket(const ServerSocket& serverSocketType);

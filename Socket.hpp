@@ -10,7 +10,15 @@
 #include <arpa/inet.h>
 # include <string>
 
-typedef struct sockaddr_in sockaddrIn;
+typedef  struct sockaddr_in sockaddrIn;
+typedef struct sockaddr sockaddr;
+
+typedef struct SSocketInfo
+{
+	int				fd;
+	sockaddrIn		addr;
+	socklen_t		addrlen;
+} SocketInfo;
 
 class Socket
 {
@@ -30,13 +38,14 @@ class Socket
 		bool	inetPToN(int domain, const std::string& ipString
 		, uint32_t& ipNum) const;
 		bool	setBlocking(bool set);
+		void	close( void );
 
 	protected :
 		Socket(const Socket& socketType);
 		Socket& operator=(const Socket& socketType);
 
 		int			_socketFd;
-	    sockaddrIn 	_addr;
+	    sockaddrIn	_addr;
 		socklen_t 	_addrLen;
 };
 

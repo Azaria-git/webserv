@@ -38,10 +38,7 @@ Socket& Socket::operator=(const Socket& socketType)
 }
 
 Socket::~Socket()
-{
-	if (_socketFd >= 0)
-		::close(_socketFd);
-}
+{ }
 
 /* ************************************************************************** */
 /*                      			Getters                                   */
@@ -134,6 +131,12 @@ bool Socket::setBlocking(bool set)
 		}
 	}
     return (true);
+}
+
+void	Socket::close( void )
+{
+	if (_socketFd >= 0)
+		::close(_socketFd);
 }
 
 /* ************************************************************************** */

@@ -88,8 +88,8 @@ bool Epoll::registerFd(int fd, unsigned int event)
 
 int Epoll::wait(int timeout)
 {
-	struct epoll_event ev;
-
+	struct epoll_event ev = {0, 0};
+	
 	_events.assign(_maxEvents, ev);
 	return (epoll_wait(_epollFd, _events.data(), _maxEvents, timeout));
 }

@@ -88,16 +88,16 @@ bool ServerSocket::listen(int backlog)
 	return (true);
 }
 
-// bool 	ServerSocket::accept(Socket& clientSocket)
-// {
-//     clientSocket.initSocketFd(::accept(_socketFd
-// 		, reinterpret_cast<struct sockaddr*>(&clientSocket._addr)
-// 		, &(this->_addrLen)))
+SocketInfo 	ServerSocket::accept( void )
+{
+	SocketInfo info;
 
-// 	if (clientSocket._socketFd < 0) {
-//         std::cerr << "Error: accept failed" << std::endl;
-//         return (false);
-//     }
-// 	return (true);
-// }
+	info.fd = ::accept(_socketFd
+		, reinterpret_cast<sockaddr *>(&info.addr)
+		, &info.addrlen);
+
+	if (info.fd < 0)
+        std::cerr << "Error: accept failed" << std::endl;
+	return (info);
+}
 
