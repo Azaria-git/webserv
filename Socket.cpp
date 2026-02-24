@@ -136,7 +136,10 @@ bool Socket::setBlocking(bool set)
 void	Socket::close( void )
 {
 	if (_socketFd >= 0)
+	{
 		::close(_socketFd);
+		_socketFd = -1;
+	}
 }
 
 /* ************************************************************************** */

@@ -88,10 +88,12 @@ bool Epoll::registerFd(int fd, unsigned int event)
 
 int Epoll::wait(int timeout)
 {
-	struct epoll_event ev = {0, 0};
+	struct epoll_event ev;
+	ev.events = 0;
+	ev.data.fd = 0;
 	
 	_events.assign(_maxEvents, ev);
-	return (epoll_wait(_epollFd, _events.data(), _maxEvents, timeout));
+	return (::epoll_wait(_epollFd, _events.data(), _maxEvents, timeout));
 }
 
 bool Epoll::modify(int fd, unsigned int event)
@@ -101,14 +103,14 @@ bool Epoll::modify(int fd, unsigned int event)
 	ev.data.fd = fd;
 	ev.events = event;
 
-	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) < 0)
+	if (::epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) < 0)
 		return (false);
 	return (true);
 }
 
 bool Epoll::unregister(int fd)
 {
-	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, 0) < 0)
+	if (::epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, 0) < 0)
 		return (false);
 	return (true);
 }

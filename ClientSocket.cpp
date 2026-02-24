@@ -38,12 +38,13 @@ ClientSocket::~ClientSocket()
 /*                         Specific Constructors                              */
 /* ************************************************************************** */
 
-ClientSocket::ClientSocket(const SocketInfo& socketInfo)
+ClientSocket::ClientSocket(const ClientData& clientData)
 	: Socket()
 {
-	this->_socketFd = socketInfo.fd;
-	this->_addr = socketInfo.addr;
-	this->_addrLen = socketInfo.addrlen;
+	this->_socketFd = clientData.clientInfo.fd;
+	this->_addr = clientData.clientInfo.addr;
+	this->_addrLen = clientData.clientInfo.addrlen;
+	this->_buffer = clientData.buffer;
 }
 
 
@@ -51,15 +52,19 @@ ClientSocket::ClientSocket(const SocketInfo& socketInfo)
 /*                                Getters                                     */
 /* ************************************************************************** */
 
-std::string ClientSocket::getBuff( void ) const
+std::string ClientSocket::getBuffer( void ) const
 {
-	return (_buff);
+	return (_buffer);
 }
 
 /* ************************************************************************** */
 /*                                Setters                                     */
 /* ************************************************************************** */
 
+void ClientSocket::setBuffer(const std::string& buff)
+{
+	_buffer = buff;
+}
 
 /* ************************************************************************** */
 /*                             Other Methods                                  */
@@ -71,15 +76,25 @@ std::string ClientSocket::recv(unsigned int count)
 
 	int bytes = ::read(_socketFd, buff, count);
 
-	if (errno == EAGAIN)
+	if (bytes < 0 && errno == EAGAIN)
 		throw Eagain();
-
 	if (bytes == 0)
 		return ("");
 	return (std::string(buff, bytes));
 }
 
-void ClientSocket::appendBuff(const std::string& newBuff)
+ssize_t ClientSocket::send(const std::string& buff)
 {
-	_buff += newBuff;
+	ssize_t sent = ::send(_socketFd
+						, buff.c_str()
+						, buff.size()
+						, MSG_DONTWAIT);
+	if (sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+		throw Eagain();
+	return (sent);
+}
+
+void ClientSocket::appendBuffer(const std::string& newBuff)
+{
+	_buffer += newBuff;
 }

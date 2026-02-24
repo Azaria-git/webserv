@@ -38,15 +38,18 @@ int main()
 	epoll.setMaxEvent(MAX_EVENTS);
 
 	epoll.registerFd(serverSocket.getSocketFd(), EPOLLIN);
-
-	std::map<int, SocketInfo> clientsInfo;
+	std::map<int, ClientData> clientsData;
 
 	while (1)
 	{
 		int nFds = epoll.wait(-1);
 
 		if (nFds < 0)
+		{
+			serverSocket.close();
+			epoll.close();
 			return (1);
+		}
 
 		for (int i = 0; i < nFds; i++)
 		{
@@ -54,52 +57,28 @@ int main()
 
 			if (currentFd == serverSocket.getSocketFd())
 			{
-				SocketInfo newClient = serverSocket.accept();
+				ClientData clientData;
+				clientData.clientInfo = serverSocket  .accept();
 				
-				if (newClient.fd < 0)
+				if (clientData.clientInfo.fd < 0)
 					return (1);
 				
-				epoll.registerFd(newClient.fd, EPOLLIN | EPOLLET);
-				clientsInfo.insert(std::make_pair(newClient.fd, newClient));
-			} 
+				epoll.registerFd(clientData.clientInfo.fd, EPOLLIN | EPOLLET);
+				clientsData.insert(std::make_pair(clientData.clientInfo.fd, clientData));
+			}
 			else
 			{
 				if (epoll.getEvents()[i].events & (EPOLLERR | EPOLLHUP))
 				{
 					::close(currentFd);
-					clientsInfo.erase(currentFd);
+					clientsData.erase(currentFd);
 					continue;
 				}
-
-				ClientSocket client(clientsInfo[currentFd]);
-
-				client.setBlocking(false);
 				if (epoll.getEvents()[i].events & EPOLLIN)
 				{
-					// char buffer[1024];
-					// int bytes;
-					// while ((bytes = read(fd, buffer, sizeof(buffer))) > 0) {
-					// 	c.readBuffer.append(buffer, bytes);
-					// }
+					ClientSocket client(clientsData[currentFd]);
 
-					// if (bytes == 0) {
-					// 	// Client a fermé la connexion
-					// 	close(fd);
-					// 	clients.erase(fd);
-					// 	continue;
-					// }
-					// // Ici tu peux traiter c.readBuffer et préparer c.writeBuffer
-					// // Exemple : echo
-					// c.writeBuffer += c.readBuffer;
-					// c.readBuffer.clear();
-
-					// // Ajouter EPOLLOUT si on a des données à écrire
-					// if (!c.writeBuffer.empty()) {
-					// 	struct epoll_event ev_out;
-					// 	ev_out.events = EPOLLIN | EPOLLOUT | EPOLLET;
-					// 	ev_out.data.fd = fd;
-					// 	epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev_out);
-					// }
+					client.setBlocking(false);
 					while (true)
 					{
 						std::string data;
@@ -107,43 +86,23 @@ int main()
 						try
 						{
 							data = client.recv(MAXREADBYTES);
+							if (data.empty())
+							{
+								client.close();
+								clientsData.erase(client.getSocketFd());
+								break;
+							}
+							client.appendBuffer(data);
 						}
 						catch(const ClientSocket::Eagain& e)
 						{
 							break;
 						}
-						if (data.empty())
-						{
-							client.close();
-							clientsInfo.erase(currentFd);
-							break;
-						}
-						client.appendBuff(data);
 					}
-					if (client.getBuff().empty())
+					if (client.getSocketFd() < 0)
 					{
 						continue ;
 					}
-					std::cout << "ok\n";
-					epoll.modify(currentFd, EPOLLOUT);
-				}
-				if (epoll.getEvents()[i].events & EPOLLOUT)
-				{
-					std::cout << "hahaha writer\n";
-					// while (!c.writeBuffer.empty()) {
-					// 	int bytes = write(fd, c.writeBuffer.c_str(), c.writeBuffer.size());
-					// 	if (bytes < 0) {
-					// 		if (errno == EAGAIN) break; // socket pleine
-					// 	}
-					// 	c.writeBuffer.erase(0, bytes);
-					// }
-
-					// if (c.writeBuffer.empty()) {
-					// 	struct epoll_event ev_in;
-					// 	ev_in.events = EPOLLIN | EPOLLET;
-					// 	ev_in.data.fd = fd;
-					// 	epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev_in);
-					// }
 
 					std::string response =
 						"HTTP/1.0 400 KO\r\n"
@@ -151,15 +110,75 @@ int main()
 						"\r\n"
 						"Hello 42\n";
 
-					ssize_t sent = write(client.getSocketFd(), response.c_str(), response.size());
-					if (sent < 0)
+					size_t totLen = 0;
+					size_t responseSize = response.size();
+
+					while (true)
 					{
-						std::cerr << "Error: write failed" << std::endl;
+						ssize_t len = 0;
+
+						try
+						{
+							len = client.send(response);
+							if (len <= 0)
+							{
+								clientsData.erase(client.getSocketFd());
+								client.close();
+								break;
+							}
+							totLen += len;
+							if (totLen == responseSize)
+								break;
+							response = response.c_str() + totLen;
+						}
+						catch(const ClientSocket::Eagain& e)
+						{
+							epoll.modify(client.getSocketFd(), EPOLLOUT);
+							clientsData[client.getSocketFd()].buffer = response;
+							break;
+						}
 					}
-					client.close();
+				}
+				if (epoll.getEvents()[i].events & EPOLLOUT)
+				{
+					ClientSocket client(clientsData[currentFd]);
+
+					std::string response = client.getBuffer();
+
+					size_t totLen = 0;
+					size_t responseSize = response.size();
+
+					while (true)
+					{
+						ssize_t len = 0;
+
+						try
+						{
+							len = client.send(response);
+							if (len <= 0)
+							{
+								clientsData.erase(client.getSocketFd());
+								client.close();
+								break;
+							}
+							totLen += len;
+							if (totLen == responseSize)
+							{
+								epoll.modify(client.getSocketFd(), EPOLLIN);
+								break;
+							}
+							response = response.c_str() + totLen;
+						}
+						catch(const ClientSocket::Eagain& e)
+						{
+							clientsData[client.getSocketFd()].buffer = response;
+							break;
+						}
+					}
 				}
 			}
 		}
 	}
     return 0;
 }
+

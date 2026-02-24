@@ -12,16 +12,26 @@
 # define MAXREADBYTES 1024
 #define	CHARARRAY(name, size) char name[size]
 
+typedef struct SClientData
+{
+	SocketInfo clientInfo;
+
+    std::string buffer;
+} 		ClientData;
+
 class ClientSocket : public Socket
 {
 	public :
-		ClientSocket(const SocketInfo& socketInfo);
+		ClientSocket(const ClientData& clientData);
 		~ClientSocket();
 
-		std::string recv(unsigned int count);
-		void 		appendBuff(const std::string& newBuff);
-		std::string getBuff( void ) const;
+		std::string getBuffer( void ) const;
+		void setBuffer(const std::string& buff);
 
+
+		std::string recv(unsigned int count);
+		ssize_t 	send(const std::string& buff);
+		void 		appendBuffer(const std::string& newBuff);
 		class Eagain : public std::exception{ };
 
 	private :
@@ -29,7 +39,7 @@ class ClientSocket : public Socket
 		ClientSocket(const ClientSocket& clientSocketType);
 		ClientSocket& operator=(const ClientSocket& clientSocketType);
 
-		std::string _buff;
+		std::string _buffer;
 };
 
 #endif /* CLIENTSOCKET_HPP */
