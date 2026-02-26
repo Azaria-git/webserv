@@ -61,15 +61,15 @@ bool	ServerSocket::bind(const std::string& host, uint16_t port)
 	_addr.sin_port = htons(port);
 
 	uint32_t addrTmp;
+
 	if (host.empty())
 	    _addr.sin_addr.s_addr = addrTmp = INADDR_ANY;
 	else
 	{
-		if (inetPToN(_addr.sin_family, host, addrTmp))
+		if (!inetPToN(_addr.sin_family, host, addrTmp))
 			return (false);
 	    _addr.sin_addr.s_addr = addrTmp;
 	}
-
     if (::bind(_socketFd, reinterpret_cast<struct sockaddr*>(&_addr), sizeof(_addr)) < 0)
 	{
         std::cerr << "Error: bind failed" << std::endl;

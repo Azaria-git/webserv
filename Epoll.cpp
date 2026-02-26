@@ -6,7 +6,6 @@
 
 # include "Epoll.hpp"
 # include <unistd.h>
-# include <sys/epoll.h>
 # include <iostream>
 
 /* ************************************************************************** */
@@ -66,7 +65,7 @@ bool Epoll::epollCreate( void )
 
 	if (_epollFd < 0)
 	{
-		std::cerr << "Error: Cannot create Epoll" << std::endl;
+		std::cerr << "Error: Epoll: Cannot create Epoll" << std::endl;
 	}
 	return (true);
 }
@@ -80,7 +79,7 @@ bool Epoll::registerFd(int fd, unsigned int event)
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) < 0)
 	{
-        std::cerr << "Error: registerFd failed" << std::endl;
+        std::cerr << "Error: Epoll: registerFd failed" << std::endl;
 		return (false);
 	}
 	return (true);

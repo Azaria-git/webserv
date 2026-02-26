@@ -88,19 +88,28 @@ bool Socket::inetPToN(int domain, const std::string& ipString, uint32_t& ipNum) 
 
 	while (std::getline(ss, token, '.'))
 	{
-		if (i > 3)
+		if (i > 3
+			|| !stringToInt(token, num)
+			|| num < 0
+			|| num > 255)
+		{
+			std::cerr << "Error: bad ip addr " << ipString << std::endl;
 			return (false);
-		if (!stringToInt(token, num))
-			return (false);
-        if(num < 0 || num > 255)
-			return (false);
-		std::cout << "num: " << num  << std::endl;
+		}
         parts.push_back(num);
 		i++;
 	}
 	ipNum = 0;
     ipNum = (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3];
 	ipNum = htonl(ipNum);
+
+	// uint32_t truee = 0;
+	// inet_pton(AF_INET, ipString.c_str(), &truee);
+	// if (ipNum == truee)
+	// 	std::cout << "ok: "<< ipNum << "==" << truee << std::endl;
+	// else
+	// 	std::cout << "ko: "<< ipNum << "==" << truee << std::endl;
+
 	return (true);
 }
 

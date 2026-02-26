@@ -13,7 +13,7 @@
 /* ************************************************************************** */
 
 ClientSocket::ClientSocket()
-	: Socket()
+	: Socket(), _fdAcceptor(-1)
 { }
 
 ClientSocket::ClientSocket(const ClientSocket& clientSocketType)
@@ -45,6 +45,7 @@ ClientSocket::ClientSocket(const ClientData& clientData)
 	this->_addr = clientData.clientInfo.addr;
 	this->_addrLen = clientData.clientInfo.addrlen;
 	this->_buffer = clientData.buffer;
+	this->_fdAcceptor = clientData.fdAcceptor;
 }
 
 
@@ -55,6 +56,11 @@ ClientSocket::ClientSocket(const ClientData& clientData)
 std::string ClientSocket::getBuffer( void ) const
 {
 	return (_buffer);
+}
+
+int ClientSocket::getFdAcceptor( void ) const
+{
+	return (_fdAcceptor);
 }
 
 /* ************************************************************************** */

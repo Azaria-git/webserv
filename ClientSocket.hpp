@@ -15,6 +15,7 @@
 typedef struct SClientData
 {
 	SocketInfo clientInfo;
+	int			fdAcceptor;
 
     std::string buffer;
 } 		ClientData;
@@ -26,6 +27,7 @@ class ClientSocket : public Socket
 		~ClientSocket();
 
 		std::string getBuffer( void ) const;
+		int			getFdAcceptor( void ) const;
 		void setBuffer(const std::string& buff);
 
 
@@ -39,6 +41,7 @@ class ClientSocket : public Socket
 		ClientSocket(const ClientSocket& clientSocketType);
 		ClientSocket& operator=(const ClientSocket& clientSocketType);
 
+		int			_fdAcceptor;
 		std::string _buffer;
 };
 

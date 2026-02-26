@@ -1,11 +1,24 @@
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 
-SRC = webserv.cpp\
+# config
+
+CONFIG_DIR = Server-config
+CONFIG_SRC = \
+			$(CONFIG_DIR)/Config.cpp\
+			$(CONFIG_DIR)/number_utils.cpp\
+			$(CONFIG_DIR)/path_utils.cpp
+
+# -------
+
+SRC = \
+	main.cpp\
 	Socket.cpp\
 	ClientSocket.cpp\
 	ServerSocket.cpp\
-	Epoll.cpp
+	Epoll.cpp\
+	Webserv.cpp\
+	$(CONFIG_SRC)
 
 OBJ = $(SRC:.cpp=.o)
 NAME = webserv

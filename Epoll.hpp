@@ -8,6 +8,7 @@
 #define EPOLL_HPP
 
 # include <vector>
+# include <sys/epoll.h>
 # define MAX_EVENTS 10
 
 class Epoll
