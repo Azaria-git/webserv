@@ -29,6 +29,8 @@ class Webserv
         Webserv& operator=(const Webserv& webservType);
         bool createServerSockets( void );
         ServerSocket* getServerSocket(int fd) const;
+        bool        readClientBuffer(ClientSocket& client);
+        void        writeClientResponse(ClientSocket& client);
 
         bool            _isAlreadyInit;
         std::string     _fileConfigName;

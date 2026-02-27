@@ -227,111 +227,99 @@ void Webserv::run(void)
 				{
 					ClientSocket client(_clientsData[currentFd]);
 
-					client.setBlocking(false);
-					while (true)
-					{
-						std::string data;
+					if (!readClientBuffer(client))
+						continue;
 
-                        /*
-                            donne tolotra---------------------------------------------
-                        */
-
-                            int maxReadBytes = MAXREADBYTES;
-                        //------------------------------------------------------------                        
-						try
-						{
-							data = client.recv(maxReadBytes);
-							if (data.empty())
-							{
-								client.close();
-								_clientsData.erase(client.getSocketFd());
-								break;
-							}
-							client.appendBuffer(data);
-						}
-						catch(const ClientSocket::Eagain& e)
-						{
-							break;
-						}
-					}
-					if (client.getSocketFd() < 0)
-					{
-						continue ;
-					}
-
+					// http tache ------------------------------------------
 					std::string response =
 						"HTTP/1.0 400 KO\r\n"
 						"Content-Type: text/plain\r\n"
 						"\r\n"
 						"Hello 42\n";
+					client.setBuffer(response);
+					// ------------------------------------------------------
 
-					size_t totLen = 0;
-					size_t responseSize = response.size();
-
-					while (true)
-					{
-						ssize_t len = 0;
-
-						try
-						{
-							len = client.send(response);
-							if (len <= 0)
-							{
-								_clientsData.erase(client.getSocketFd());
-								client.close();
-								break;
-							}
-							totLen += len;
-							if (totLen == responseSize)
-								break;
-							response = response.c_str() + totLen;
-						}
-						catch(const ClientSocket::Eagain& e)
-						{
-							_epoll.modify(client.getSocketFd(), EPOLLOUT);
-							_clientsData[client.getSocketFd()].buffer = response;
-							break;
-						}
-					}
+					writeClientResponse(client);
 				}
 				if (_epoll.getEvents()[i].events & EPOLLOUT)
 				{
 					ClientSocket client(_clientsData[currentFd]);
 
-					std::string response = client.getBuffer();
-
-					size_t totLen = 0;
-					size_t responseSize = response.size();
-
-					while (true)
-					{
-						ssize_t len = 0;
-
-						try
-						{
-							len = client.send(response);
-							if (len <= 0)
-							{
-								_clientsData.erase(client.getSocketFd());
-								client.close();
-								break;
-							}
-							totLen += len;
-							if (totLen == responseSize)
-							{
-								_epoll.modify(client.getSocketFd(), EPOLLIN);
-								break;
-							}
-							response = response.c_str() + totLen;
-						}
-						catch(const ClientSocket::Eagain& e)
-						{
-							_clientsData[client.getSocketFd()].buffer = response;
-							break;
-						}
-					}
+					writeClientResponse(client);
 				}
 			}
+		}
+	}
+}
+
+bool Webserv::readClientBuffer(ClientSocket& client)
+{
+	/*
+		donne tolotra---------------------------------------------
+	*/
+
+	int maxReadBytes = MAXREADBYTES;
+
+		// --- bloking
+	client.setBlocking(false);
+
+	//------------------------------------------------------------
+	
+	while (true)
+	{
+		std::string data;
+
+		try
+		{
+			data = client.recv(maxReadBytes);
+			if (data.empty())
+			{
+				client.close();
+				_clientsData.erase(client.getSocketFd());
+				return (false);
+			}
+			client.appendBuffer(data);
+		}
+		catch(const ClientSocket::Eagain& e)
+		{
+			return (true);
+		}
+	}
+	return (true);
+}
+
+void	Webserv::writeClientResponse(ClientSocket& client)
+{
+	size_t bytesSend = 0;
+	std::string	response = client.getBuffer();
+	size_t responseSize = response.size();
+
+	while (true)
+	{
+		ssize_t len = 0;
+
+		try
+		{
+			len = client.send(response);
+			if (len <= 0)
+			{
+				_clientsData.erase(client.getSocketFd());
+				client.close();
+				return ;
+			}
+			bytesSend += len;
+			if (bytesSend == responseSize)
+			{
+				_epoll.modify(client.getSocketFd(), EPOLLIN);
+				return ;
+			}
+			response = response.c_str() + bytesSend;
+		}
+		catch(const ClientSocket::Eagain& e)
+		{
+			_epoll.modify(client.getSocketFd(), EPOLLOUT);
+			_clientsData[client.getSocketFd()].buffer = response;
+			return ;
 		}
 	}
 }
