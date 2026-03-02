@@ -6,7 +6,7 @@
 /*   By: toloandr <toloandr@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 07:49:06 by toloandr          #+#    #+#             */
-/*   Updated: 2026/02/17 07:49:07 by toloandr         ###   ########.fr       */
+/*   Updated: 2026/03/01 01:22:29 by toloandr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <exception>
 #include <string>
+#include <cctype>
 
 
 enum HttpMethod
@@ -76,7 +77,9 @@ public:
         virtual const char* what() const throw();
         virtual ~ConfigException() throw();       
     };
-
+    void checkPorts();
+    void checkDirectoryListing();
+    int checkLine(std::string line);
 };
 
 #endif

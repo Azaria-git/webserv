@@ -6,6 +6,10 @@
 
 #include "Webserv.hpp"
 
+# include <signal.h>
+
+extern volatile sig_atomic_t stop;
+
 /* ************************************************************************** */
 /*                            Canonical Form                                  */
 /* ************************************************************************** */
@@ -72,7 +76,9 @@ bool Webserv::init( void )
     }
 
     if (!createServerSockets())
+	{
         return (false);
+	}
 
     /*
         donne tolotra---------------------------------------------
@@ -190,7 +196,7 @@ void Webserv::run(void)
 
         int epollTimeOut = -1;
     //------------------------------------------------------------
-	while (1)
+	while (!stop)
 	{
 		int nFds = _epoll.wait(epollTimeOut);
 
@@ -199,7 +205,6 @@ void Webserv::run(void)
             this->clear();
 			return ;
 		}
-
 		for (int i = 0; i < nFds; i++)
 		{
 			int currentFd = _epoll.getEvents()[i].data.fd;

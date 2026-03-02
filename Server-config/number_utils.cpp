@@ -6,7 +6,7 @@
 /*   By: toloandr <toloandr@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 07:48:56 by toloandr          #+#    #+#             */
-/*   Updated: 2026/02/17 07:48:57 by toloandr         ###   ########.fr       */
+/*   Updated: 2026/02/27 22:48:45 by toloandr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,8 +52,6 @@ bool isIpV4(const std::string &s)
         if (!isPositiveInt(word))
             return (false);
         d = std::strtod(word.c_str(), NULL);
-        if (d > 255)
-            return (false);
         c++;
     }
     if (c != 4 || dots != 3)

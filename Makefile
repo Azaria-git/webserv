@@ -13,6 +13,7 @@ CONFIG_SRC = \
 
 SRC = \
 	main.cpp\
+	Signal.cpp\
 	Socket.cpp\
 	ClientSocket.cpp\
 	ServerSocket.cpp\
