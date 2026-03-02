@@ -4,10 +4,10 @@
    Created: 2026/02/25 09:49:55
 */
 
-#include "Webserv.hpp"
+# include "Webserv.hpp"
+# include "./HTTP-Request-class/Request.hpp"
 
 # include <signal.h>
-
 extern volatile sig_atomic_t stop;
 
 /* ************************************************************************** */
@@ -236,20 +236,14 @@ void Webserv::run(void)
 						continue;
 
 					// http tache ------------------------------------------
-					std::string response =
-						"HTTP/1.0 400 KO\r\n"
-						"Content-Type: text/plain\r\n"
-						"\r\n"
-						"Hello 42\n";
-					client.setBuffer(response);
+					http(client);
 					// ------------------------------------------------------
-
+		
 					writeClientResponse(client);
 				}
 				if (_epoll.getEvents()[i].events & EPOLLOUT)
 				{
 					ClientSocket client(_clientsData[currentFd]);
-
 					writeClientResponse(client);
 				}
 			}
@@ -308,15 +302,12 @@ void	Webserv::writeClientResponse(ClientSocket& client)
 			len = client.send(response);
 			if (len <= 0)
 			{
-				_clientsData.erase(client.getSocketFd());
-				client.close();
-				return ;
+				break;
 			}
 			bytesSend += len;
 			if (bytesSend == responseSize)
 			{
-				_epoll.modify(client.getSocketFd(), EPOLLIN);
-				return ;
+				break ;
 			}
 			response = response.c_str() + bytesSend;
 		}
@@ -326,5 +317,65 @@ void	Webserv::writeClientResponse(ClientSocket& client)
 			_clientsData[client.getSocketFd()].buffer = response;
 			return ;
 		}
+	}
+	_clientsData.erase(client.getSocketFd());
+	client.close();
+}
+
+
+void Webserv::http(ClientSocket& client)
+{
+	try
+	{
+		Request request(client);
+		std::string response =
+			"HTTP/1.0 400 OK\r\n"
+			"Content-Type: text/plain\r\n"
+			"\r\n"
+			"Hello 42\n";
+
+		std::cout << request.getMethod() << " " << request.getPathName() << request.getHTTPversion() << std::endl;
+
+		client.setBuffer(response);
+	}
+	catch(const Request::InvalidMethod& e)
+	{
+		client.setBuffer("Invalid method");
+		return ;
+	}
+	catch(const Request::NotImplementedMethod& e)
+	{
+		client.setBuffer("501 Method not implemented");
+		return ;
+	}
+	catch(const Request::BadRequest& e)
+	{
+		client.setBuffer("400 Bad request");
+		return ;
+	}
+	catch(const Request::URITooLong& e)
+	{
+		client.setBuffer("414 Request-URI Too Long");
+		return ;
+	}
+	catch(const Request::NotFound& e)
+	{
+		client.setBuffer("404 Not found");
+		return ;
+	}
+	catch(const Request::LengthRequired& e)
+	{
+		client.setBuffer("411 Length Required");
+		return ;
+	}
+	catch(const Request::PayloadTooLarge& e)
+	{
+		client.setBuffer("413 Payload Too Large");
+		return ;
+	}
+	catch(const Request::UnsupportedMediaType& e)
+	{
+		client.setBuffer("415 Unsupported Media Type");
+		return ;
 	}
 }

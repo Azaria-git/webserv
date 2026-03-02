@@ -11,6 +11,11 @@ CONFIG_SRC = \
 
 # -------
 
+# HTTP-Request
+HTTP_REQUEST_DIR = HTTP-Request-class
+HTTP_REQUEST_SRC = \
+					$(HTTP_REQUEST_DIR)/Request.cpp
+
 SRC = \
 	main.cpp\
 	Signal.cpp\
@@ -19,7 +24,8 @@ SRC = \
 	ServerSocket.cpp\
 	Epoll.cpp\
 	Webserv.cpp\
-	$(CONFIG_SRC)
+	$(CONFIG_SRC)\
+	$(HTTP_REQUEST_SRC)
 
 OBJ = $(SRC:.cpp=.o)
 NAME = webserv
